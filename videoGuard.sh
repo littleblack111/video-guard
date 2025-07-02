@@ -44,14 +44,10 @@ function handler() {
 
 function hyprDialog() {
 	if [ $1 -eq 0 ]; then
-		hyprland-dialog --title "Permission Notice" \
-			--text "An <b>$3</br> application is accessing your camera <b>$2</b>." \
-			--buttons "OK"
+		notify-send -e "Video Accessed" "An <b>$3</b> application is accessing your camera <b>$2</b>."
 		return 0
 	elif [ $1 -eq 2 ]; then
-		hyprland-dialog --title "Permission Notice" \
-			--text "An allowed application <b>$3</b> is accessing your camera <b>$2</b>." \
-			--buttons "OK"
+		notify-send -e "Video Accessed" "An allowed <b>$3</b> application is accessing your camera <b>$2</b>."
 		return 0
 	fi
 	local answer=$(hyprland-dialog --title "Permission request" \
