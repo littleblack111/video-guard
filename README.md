@@ -1,5 +1,5 @@
 # video-guard
-Guards your /dev/video*
+Helper that guards and requests user confirmation for /dev/video* access
 
 # Important
 This requires inotifywait and lsof
