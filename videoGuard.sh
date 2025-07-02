@@ -1,7 +1,6 @@
 #!/bin/bash
 
 shopt -s nullglob
-set -x
 
 dialog="${1:-hyprDialog}"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
