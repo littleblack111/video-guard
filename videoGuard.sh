@@ -19,10 +19,19 @@ function getClients() {
 function handler() {
 	local clients=$(getClients $1)
 	local allowedClients
+	local ignoredCamera
 	if [ -f "$XDG_CONFIG_HOME/videoGuard/allowedClients" ]; then
 		allowedClients=$(cat "$XDG_CONFIG_HOME/videoGuard/allowedClients")
 	else
 		allowedClients=""
+	fi
+	if [ -f "$XDG_CONFIG_HOME/videoGuard/ignoredCamera" ]; then
+		ignoredCamera=$(cat "$XDG_CONFIG_HOME/videoGuard/ignoredCamera")
+	else
+		ignoredCamera=""
+	fi
+	if [[ $1 == "$ignoredCamera" ]]; then
+		return 0
 	fi
 	for i in ${clients:-""}; do
 		if [[ $i == "" ]]; then
