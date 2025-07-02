@@ -1,0 +1,12 @@
+[Unit]
+Description=Video guard
+After=local-fs.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/videoGuard.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
