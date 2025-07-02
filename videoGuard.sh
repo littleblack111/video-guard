@@ -24,13 +24,17 @@ function handler() {
 	else
 		allowedClients=""
 	fi
-	for i in $clients; do
+	for i in ${clients:-""}; do
+		if [[ $i == "" ]]; then
+			$dialog 0 "$1" "Unknown"
+			continue
+		fi
 		for j in ${allowedClients:-""}; do
 			if [[ "$i" == "$j" ]]; then
-				continue
+				$dialog 2 "$1" "$i"
 			else
 				killall -19 "$i"
-				if [[ $("$dialog" "$1" "$clients") == 0 ]]; then
+				if [[ $("$dialog" 1 "$1" "$clients") == 0 ]]; then
 					killall -18 "$i"
 				fi
 			fi
@@ -39,8 +43,19 @@ function handler() {
 }
 
 function hyprDialog() {
+	if [ $1 -eq 0 ]; then
+		hyprland-dialog --title "Permission Notice" \
+			--text "An <b>$3</br> application is accessing your camera <b>$2</b>." \
+			--buttons "OK"
+		return 0
+	elif [ $1 -eq 2 ]; then
+		hyprland-dialog --title "Permission Notice" \
+			--text "An allowed application <b>$3</b> is accessing your camera <b>$2</b>." \
+			--buttons "OK"
+		return 0
+	fi
 	local answer=$(hyprland-dialog --title "Permission request" \
-		--text "An application <b>$2</b> is trying to access your camera <b>$1</b>.<br/><br/>Do you want to allow it to do so?" \
+		--text "An application <b>$3</b> is trying to access your camera <b>$2</b>.<br/><br/>Do you want to allow it to do so?" \
 		--buttons "Allow;Deny")
 	if [ "$answer" == "Allow" ]; then
 		echo 0
