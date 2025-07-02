@@ -13,7 +13,7 @@ function guard() {
 }
 
 function getClients() {
-	LC_ALL=C lsof $1 | awk 'NR>1 {print $1}' | sort -u # can't return smh bash
+	LC_ALL=C lsof "$1" | awk 'NR>1 && !seen[$1]++ {print $1}' | paste -sd ' ' # bash can't return smh
 }
 
 function handler() {
