@@ -34,7 +34,7 @@ function handler() {
 				$dialog 2 "$1" "$i"
 			else
 				killall -19 "$i"
-				if [[ $("$dialog" 1 "$1" "$clients") == 0 ]]; then
+				if [[ $("$dialog" 1 "$1" "$i") == 0 ]]; then
 					killall -18 "$i"
 				fi
 			fi
