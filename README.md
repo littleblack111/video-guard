@@ -10,3 +10,6 @@ To use lsof, you need to have the `cap_sys_admin+ep` capability set on the binar
 ```bash
 sudo setcap cap_sys_admin+ep /usr/bin/lsof
 ```
+
+# Notes
+- No it wouldn't let the app get first few frames before inotifywait kicks in. (i tested it)
