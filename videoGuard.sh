@@ -40,7 +40,7 @@ function handler() {
 
 function guard() {
 	while true; do
-		handler "$1" "$(video-guard-helper "${1: -1}")"
+		handler "$1" "$(video-guard-helper open "${1: -1}")"
 	done
 }
 

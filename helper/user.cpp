@@ -29,30 +29,41 @@ static int handle_event(void *ctx, void *data, size_t) {
 }
 
 int main(int argc, char **argv) {
-	if (argc != 2) {
-		std::println(stderr, "Usage: {} <video_index>", argv[0]);
+	if (argc != 3) {
+		std::println(stderr, "Usage: {} <open|close> <video_index>", argv[0]);
 		return 1;
 	}
-	int idx = std::atoi(argv[1]);
+	bool is_open = std::strcmp(argv[1], "open") == 0;
+	bool is_close = std::strcmp(argv[1], "close") == 0;
+	if (!is_open && !is_close) {
+		std::println(stderr, "First arg must be 'open' or 'close'");
+		return 1;
+	}
+	int idx = std::atoi(argv[2]);
 	char target[MAX_PATH_LEN];
 	std::snprintf(target, sizeof(target), "/dev/video%d", idx);
+	uint32_t key = 0;
+	uint32_t mode = is_open ? 0 : 1;
 
 	bump_memlock_rlimit();
-
 	struct kernel_bpf *skel = kernel_bpf__open_and_load();
 	if (!skel) {
 		std::println(stderr, "ERROR: opening BPF skeleton");
 		return 1;
 	}
 
-	uint32_t key = 0;
 	if (bpf_map_update_elem(bpf_map__fd(skel->maps.target_path), &key, target,
 							BPF_ANY)) {
-		perror("bpf_map_update_elem");
+		perror("bpf_map_update_elem target_path");
 		kernel_bpf__destroy(skel);
 		return 1;
 	}
-
+	if (bpf_map_update_elem(bpf_map__fd(skel->maps.mode_map), &key, &mode,
+							BPF_ANY)) {
+		perror("bpf_map_update_elem mode_map");
+		kernel_bpf__destroy(skel);
+		return 1;
+	}
 	if (kernel_bpf__attach(skel)) {
 		std::println(stderr, "ERROR: attaching BPF programs");
 		kernel_bpf__destroy(skel);
