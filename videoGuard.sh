@@ -24,6 +24,7 @@ function handler() {
 	fi
 	if [[ $client == "" ]]; then # shouldn't happen now as our helper is ran in kernel
 		$dialog 0 "$1" "Unknown"
+		return
 	fi
 	for j in ${allowedClients:-""}; do
 		if [[ "$client" == "$j" ]]; then
