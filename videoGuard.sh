@@ -5,19 +5,8 @@ shopt -s nullglob
 dialog="${1:-hyprDialog}"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 
-function guard() {
-	inotifywait $1 -e open && (
-		$2 $1 &
-		guard $1 $2
-	)
-}
-
-function getClient() {
-	video-guard-helper $1
-}
-
 function handler() {
-	local client=$(ps -p $(getClient "$1") -o comm=)
+	local client=$(ps -p $2 -o comm=)
 	local allowedClients
 	local ignoredCamera
 	if [ -f "$XDG_CONFIG_HOME/videoGuard/allowedClients" ]; then
@@ -48,6 +37,12 @@ function handler() {
 	done
 }
 
+function guard() {
+	while true; do
+		handler "$1" "$(video-guard-helper "${1: -1}")"
+	done
+}
+
 function hyprDialog() {
 	if [ $1 -eq 0 ]; then
 		notify-send -e "Video Accessed" "An <b>$3</b> application is accessing your camera <b>$2</b>."
@@ -67,5 +62,5 @@ function hyprDialog() {
 }
 
 for i in /dev/video*; do
-	guard $i handler &
+	guard $i &
 done
