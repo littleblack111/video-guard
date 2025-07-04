@@ -68,13 +68,9 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	while (true) {
-		int err = ring_buffer__poll(rb, 100 /* ms */);
-		if (err < 0 && err != -EINTR) {
-			std::println(stderr, "ERROR: polling ring buffer: {}", err);
-			break;
-		}
-	}
+	int err = ring_buffer__poll(rb, -1);
+	if (err < 0 && err != -EINTR)
+		std::println(stderr, "ERROR: polling ring buffer: {}", err);
 
 	ring_buffer__free(rb);
 	kernel_bpf__destroy(skel);
