@@ -12,12 +12,12 @@ function guard() {
 	)
 }
 
-function getClients() {
-	LC_ALL=C lsof "$1" | awk 'NR>1 && !seen[$1]++ {print $1}' | paste -sd ' ' # bash can't return smh
+function getClient() {
+	video-guard-helper $1
 }
 
 function handler() {
-	local clients=$(getClients $1)
+	local client=$(ps -p $(getClient "$1") -o comm=)
 	local allowedClients
 	local ignoredCamera
 	if [ -f "$XDG_CONFIG_HOME/videoGuard/allowedClients" ]; then
@@ -33,21 +33,18 @@ function handler() {
 	if [[ $1 == "$ignoredCamera" ]]; then
 		return 0
 	fi
-	for i in ${clients:-""}; do
-		if [[ $i == "" ]]; then
-			$dialog 0 "$1" "Unknown"
-			continue
-		fi
-		for j in ${allowedClients:-""}; do
-			if [[ "$i" == "$j" ]]; then
-				$dialog 2 "$1" "$i"
-			else
-				killall -19 "$i"
-				if [[ $("$dialog" 1 "$1" "$i") == 0 ]]; then
-					killall -18 "$i"
-				fi
+	if [[ $client == "" ]]; then # shouldn't happen now as our helper is ran in kernel
+		$dialog 0 "$1" "Unknown"
+	fi
+	for j in ${allowedClients:-""}; do
+		if [[ "$client" == "$j" ]]; then
+			$dialog 2 "$1" "$client"
+		else
+			killall -19 "$client"
+			if [[ $("$dialog" 1 "$1" "$client") == 0 ]]; then
+				killall -18 "$client"
 			fi
-		done
+		fi
 	done
 }
 
