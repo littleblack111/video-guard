@@ -11,7 +11,7 @@ dialog="${1:-hyprDialog}"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 
 function handler() {
-	local client=$(ps -p $2 -o comm=)
+	local client=$(ps -p $2 -o comm= 2>/dev/null) # pid may be null but we don't care
 	local allowedClients
 	local ignoredCamera
 	if [ -f "$XDG_CONFIG_HOME/videoGuard/allowedClients" ]; then
@@ -25,11 +25,15 @@ function handler() {
 		ignoredCamera=""
 	fi
 	if [[ $1 == "$ignoredCamera" ]]; then
-		kill -18 "$2"
+		kill -18 "$2" 2>/dev/null # pid may be null but we don't care
 		return
 	fi
 	if [[ $client == "" ]]; then # can still happen if another program with kernel access is using the camera
-		$dialog 0 "$1" "with PID <b>$2</b>"
+		if [[ "$2" == "" ]]; then
+			$dialog 0 "$1" "<b>Unknown</b> application"
+		else
+			$dialog 0 "$1" "application with PID <b>$2</b>"
+		fi
 		return
 	fi
 	for j in $allowedClients; do
@@ -53,7 +57,7 @@ function guard() {
 
 function hyprDialog() {
 	if [ $1 -eq 0 ]; then
-		notify-send -e "Video Accessed" "An application $3 application is accessing your camera <b>$2</b>."
+		notify-send -e "Video Accessed" "An $3 is accessing your camera <b>$2</b>."
 		return 0
 	elif [ $1 -eq 2 ]; then
 		notify-send -e "Video Accessed" "An allowed <b>$3</b> application is accessing your camera <b>$2</b>."
