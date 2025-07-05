@@ -32,7 +32,9 @@ function handler() {
 		if [[ "$2" == "" ]]; then
 			$dialog 0 "$1" "<b>Unknown</b> application"
 		else
-			$dialog 0 "$1" "application with PID <b>$2</b>"
+			if [[ $("$dialog" 3 "$1" "with PID <b>$2</b>") ]]; then
+				kill -18 "$2"
+			fi
 		fi
 		return
 	fi
@@ -62,8 +64,12 @@ function hyprDialog() {
 	elif [ $1 -eq 2 ]; then
 		notify-send -e "Video Accessed" "An allowed <b>$3</b> application is accessing your camera <b>$2</b>."
 		return 0
+	elif [ $1 -eq 3 ]; then
+		local answer=$(hyprland-dialog --title "Permission request" \
+			--text "An application $3 is trying to access your camera <b>$2</b>.<br/><br/>Do you want to allow it to do so?" \
+			--buttons "Allow;Deny")
 	fi
-	local answer=$(hyprland-dialog --title "Permission request" \
+	[[ -v answer ]] || local answer=$(hyprland-dialog --title "Permission request" \
 		--text "An application <b>$3</b> is trying to access your camera <b>$2</b>.<br/><br/>Do you want to allow it to do so?" \
 		--buttons "Allow;Deny")
 	if [ "$answer" == "Allow" ]; then
