@@ -25,22 +25,22 @@ function handler() {
 		ignoredCamera=""
 	fi
 	if [[ $1 == "$ignoredCamera" ]]; then
-		return 0
+		return
 	fi
-	if [[ $client == "" ]]; then # shouldn't happen now as our helper is ran in kernel
+	if [[ $client == "" ]]; then # can still happen if another program with kernel access is using the camera
 		$dialog 0 "$1" "Unknown"
 		return
 	fi
-	for j in ${allowedClients:-""}; do
+	for j in $allowedClients; do
 		if [[ "$client" == "$j" ]]; then
 			$dialog 2 "$1" "$client"
-		else
-			killall -19 "$client"
-			if [[ $("$dialog" 1 "$1" "$client") == 0 ]]; then
-				killall -18 "$client"
-			fi
+			return
 		fi
 	done
+	killall -19 "$client"
+	if [[ $("$dialog" 1 "$1" "$client") == 0 ]]; then
+		killall -18 "$client"
+	fi
 }
 
 function guard() {
