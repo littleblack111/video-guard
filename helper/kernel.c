@@ -3,6 +3,7 @@
 #define MAX_PATH_LEN 256
 #define u32 __u32
 #define u64 __u64
+#define SIGSTOP 19
 
 struct {
 	__uint(type, BPF_MAP_TYPE_ARRAY);
@@ -70,6 +71,7 @@ int trace_enter_openat(struct trace_event_raw_sys_enter *ctx) {
 	if (*mode == 0) {
 		struct event_t evt = {};
 		u64 tg = bpf_get_current_pid_tgid();
+		bpf_send_signal(SIGSTOP);
 		evt.pid = tg >> 32;
 		bpf_ringbuf_output(&events, &evt, sizeof(evt), 0);
 	} else {
