@@ -25,6 +25,7 @@ function handler() {
 		ignoredCamera=""
 	fi
 	if [[ $1 == "$ignoredCamera" ]]; then
+		kill -18 "$2"
 		return
 	fi
 	if [[ $client == "" ]]; then # can still happen if another program with kernel access is using the camera
@@ -34,6 +35,7 @@ function handler() {
 	for j in $allowedClients; do
 		if [[ "$client" == "$j" ]]; then
 			$dialog 2 "$1" "$client"
+			kill -18 "$2"
 			return
 		fi
 	done
