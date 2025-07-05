@@ -28,7 +28,7 @@ function handler() {
 		return
 	fi
 	if [[ $client == "" ]]; then # can still happen if another program with kernel access is using the camera
-		$dialog 0 "$1" "Unknown"
+		$dialog 0 "$1" "with PID <b>$2</b>"
 		return
 	fi
 	for j in $allowedClients; do
@@ -51,7 +51,7 @@ function guard() {
 
 function hyprDialog() {
 	if [ $1 -eq 0 ]; then
-		notify-send -e "Video Accessed" "An <b>$3</b> application is accessing your camera <b>$2</b>."
+		notify-send -e "Video Accessed" "An application $3 application is accessing your camera <b>$2</b>."
 		return 0
 	elif [ $1 -eq 2 ]; then
 		notify-send -e "Video Accessed" "An allowed <b>$3</b> application is accessing your camera <b>$2</b>."
