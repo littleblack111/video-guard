@@ -2,6 +2,11 @@
 
 shopt -s nullglob
 
+if ! command -v video-guard-helper &>/dev/null; then
+	echo "video-guard-helper is not installed. Please install it first."
+	exit 1
+fi
+
 dialog="${1:-hyprDialog}"
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 
