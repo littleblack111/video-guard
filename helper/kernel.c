@@ -69,9 +69,22 @@ int trace_enter_openat(struct trace_event_raw_sys_enter *ctx) {
 			break;
 	}
 	if (*mode == 0) {
+		u64 uid_gid = bpf_get_current_uid_gid();
+		u32 uid = (u32)uid_gid;
+		if (uid >= 1000)
+			bpf_send_signal(SIGSTOP);
+
 		struct event_t evt = {};
 		u64 tg = bpf_get_current_pid_tgid();
-		bpf_send_signal(SIGSTOP);
+		char comm[TASK_COMM_LEN];
+		struct task_struct *task = (struct task_struct *)bpf_get_current_task();
+
+		bpf_probe_read_kernel_str(&comm, sizeof(comm), task->comm);
+		if (comm[0] != '\0') {
+			if (comm != "v4l_id" && comm != "(udev-worker)") {
+				bpf_send_signal(SIGSTOP);
+			}
+		}
 		evt.pid = tg >> 32;
 		bpf_ringbuf_output(&events, &evt, sizeof(evt), 0);
 	} else {
