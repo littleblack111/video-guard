@@ -1,5 +1,6 @@
 #include "vmlinux.h"
 #include <bpf/bpf_helpers.h>
+
 #define MAX_PATH_LEN 256
 #define u32 __u32
 #define u64 __u64
@@ -53,14 +54,17 @@ int trace_enter_openat(struct trace_event_raw_sys_enter *ctx) {
 	u32 *mode = bpf_map_lookup_elem(&mode_map, &key);
 	if (!mode)
 		return 0;
+
 	char *target = bpf_map_lookup_elem(&target_path, &key);
 	if (!target)
 		return 0;
+
 	char filename[MAX_PATH_LEN];
 	int len = bpf_probe_read_str(filename, sizeof(filename),
 								 (const void *)ctx->args[1]);
 	if (len <= 0)
 		return 0;
+
 #pragma unroll
 	for (int i = 0; i < MAX_PATH_LEN; i++) {
 		if (filename[i] != target[i])
@@ -68,6 +72,7 @@ int trace_enter_openat(struct trace_event_raw_sys_enter *ctx) {
 		if (filename[i] == '\0')
 			break;
 	}
+
 	if (*mode == 0) {
 		u64 uid_gid = bpf_get_current_uid_gid();
 		u32 uid = (u32)uid_gid;
@@ -75,23 +80,14 @@ int trace_enter_openat(struct trace_event_raw_sys_enter *ctx) {
 			bpf_send_signal(SIGSTOP);
 
 		struct event_t evt = {};
-		u64 tg = bpf_get_current_pid_tgid();
-		char comm[TASK_COMM_LEN];
-		struct task_struct *task = (struct task_struct *)bpf_get_current_task();
-
-		bpf_probe_read_kernel_str(&comm, sizeof(comm), task->comm);
-		if (comm[0] != '\0') {
-			if (comm != "v4l_id" && comm != "(udev-worker)") {
-				bpf_send_signal(SIGSTOP);
-			}
-		}
-		evt.pid = tg >> 32;
+		evt.pid = bpf_get_current_pid_tgid() >> 32;
 		bpf_ringbuf_output(&events, &evt, sizeof(evt), 0);
 	} else {
 		u64 pid_tgid = bpf_get_current_pid_tgid();
 		u8 flag = 1;
 		bpf_map_update_elem(&open_pids, &pid_tgid, &flag, BPF_ANY);
 	}
+
 	return 0;
 }
 
@@ -101,14 +97,17 @@ int trace_exit_openat(struct trace_event_raw_sys_exit *ctx) {
 	u32 *mode = bpf_map_lookup_elem(&mode_map, &key);
 	if (!mode || *mode != 1)
 		return 0;
+
 	u64 pid_tgid = bpf_get_current_pid_tgid();
 	u8 *flag = bpf_map_lookup_elem(&open_pids, &pid_tgid);
 	if (!flag)
 		return 0;
 	bpf_map_delete_elem(&open_pids, &pid_tgid);
+
 	int fd = ctx->ret;
 	if (fd < 0)
 		return 0;
+
 	struct pidfd k = {.pid = (u32)(pid_tgid >> 32), .fd = (u32)fd};
 	u8 one = 1;
 	bpf_map_update_elem(&fd_map, &k, &one, BPF_ANY);
@@ -121,14 +120,18 @@ int trace_enter_close(struct trace_event_raw_sys_enter *ctx) {
 	u32 *mode = bpf_map_lookup_elem(&mode_map, &key);
 	if (!mode || *mode != 1)
 		return 0;
+
 	u64 pid_tgid = bpf_get_current_pid_tgid();
 	u32 pid = pid_tgid >> 32;
 	u32 fd = (u32)ctx->args[0];
+
 	struct pidfd k = {.pid = pid, .fd = fd};
 	u8 *flag = bpf_map_lookup_elem(&fd_map, &k);
 	if (!flag)
 		return 0;
+
 	bpf_map_delete_elem(&fd_map, &k);
+
 	struct event_t evt = {.pid = pid};
 	bpf_ringbuf_output(&events, &evt, sizeof(evt), 0);
 	return 0;
